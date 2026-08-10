@@ -1,0 +1,149 @@
+diff --git a/zdnn/convert_hw.c b/zdnn/convert_hw.c
+index d9ff305..afde76b 100644
+--- a/zdnn/convert_hw.c
++++ b/zdnn/convert_hw.c
+@@ -37,14 +37,19 @@ vec_char8 selection_vector = {0,  1,  4,  5,  8,  9,  12, 13,
+                               16, 17, 20, 21, 24, 25, 28, 29};
+ static vec_int16 zero_vector16 = {0, 0, 0, 0, 0, 0, 0, 0};
+ // 4 vector of the MIN DFL16 value represented as FP32
++#if defined(__MVS__) && defined(__clang__)
++static const vec_float32 dlflt_min_vec = {0xCFFF8000, 0xCFFF8000, 0xCFFF8000, 0xCFFF8000};
++static const vec_float32 dlflt_max_vec = {0x4FFF8000, 0x4FFF8000, 0x4FFF8000, 0x4FFF8000};
++static const vec_float32 dlflt_inf_vec = {0x7F800000, 0x7F800000, 0x7F800000, 0x7F800000};
++#else
+ static const vector float dlflt_min_vec = {
+     DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32};
+-// 4 vector of the MAX DFL16 value represented as FP32
+ static const vector float dlflt_max_vec = {
+     DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32};
+-
+ static const vector float dlflt_inf_vec = {INFINITY, INFINITY, INFINITY,
+                                            INFINITY};
++#endif
++
+ /***********************************************************************
+  * aiu_vec_round_from_fp32 routines
+  *
+@@ -61,7 +66,7 @@ static vec_int16 inline aiu_vec_round_from_fp32_inline(vec_float32 a,
+                                                        vec_float32 b) {
+   vec_int16 out;
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   /*
+        Invoke the VCRNF
+                   "*     VCRNF VReg0,VRegL,VRegR,mask2,0        \n\t"
+@@ -84,6 +89,13 @@ static vec_int16 inline aiu_vec_round_from_fp32_inline(vec_float32 a,
+                  :  /* "%v0", "%v1", "%v2"   Clobbered */
+   );
+ // clang-format on
++#elif defined(__clang__)
++  __asm volatile("         VL    1,%[in_vector_left]         \n"
++                 "         VL    2,%[in_vector_right]        \n"
++                 "         VCRNF 0,1,2,2,0                   \n"
++                 "         VST   0,%[out_vector]             \n"
++                 : [out_vector] "=m"(out)
++                 : [in_vector_left] "m"(a), [in_vector_right] "m"(b));
+ #else
+   // clang-format off
+   __asm volatile(".insn vrr,0xe60000000075,%[out],%[in_hi],%[in_lo],0,2,0"
+@@ -115,7 +127,7 @@ vec_int16 aiu_vec_round_from_fp32(vec_float32 a, vec_float32 b) {
+ static vec_int16 inline aiu_vec_convert_from_fp16_inline(vec_int16 a) {
+   vec_int16 out;
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   /*
+       Invoke the VCNF
+                  "*     VCNF VReg0,VReg1,,mask1,0        \n\t"
+@@ -136,6 +148,12 @@ static vec_int16 inline aiu_vec_convert_from_fp16_inline(vec_int16 a) {
+                  :  /* "%v0", "%v1"   Clobbered */
+                 // clang-format on
+   );
++#elif defined(__clang__)
++  __asm volatile("         VL    1,%[in_vector]              \n"
++                 "         VCNF  0,1,1,0                     \n"
++                 "         VST   0,%[out_vector]             \n"
++                 : [out_vector] "=m"(out)
++                 : [in_vector] "m"(a));
+ #else
+   // clang-format off
+     __asm volatile(".insn vrr,0xe60000000055,%[out],%[in_vec],0,0,1,0"
+@@ -170,7 +188,7 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
+   vec_float32 work_float_1;
+   vec_float32 work_float_2;
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   /*
+    *  Invoke the VCLFNx
+    *  "*     VCLFN(H/L) VReg0,VReg2,mask0,mask2      \n\t"
+@@ -194,6 +212,17 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
+   // clang-format on
+   *out1 = work_float_1;
+   *out2 = work_float_2;
++#elif defined(__clang__)
++  __asm volatile("         VL     2,%[in_vector]             \n"
++                 "         VCLFNH 0,2,0,2                    \n"
++                 "         VCLFNL 1,2,0,2                    \n"
++                 "         VST    0,%[out_vector_left]       \n"
++                 "         VST    1,%[out_vector_right]      \n"
++                 : [out_vector_left] "=m"(work_float_1),
++                   [out_vector_right] "=m"(work_float_2)
++                 : [in_vector] "m"(a));
++  *out1 = work_float_1;
++  *out2 = work_float_2;
+ #else
+   // clang-format off
+   __asm volatile(".insn vrr,0xe60000000056,%[out1],%[in_vec],0,2,0,0    \n\t"
+@@ -230,7 +259,7 @@ void aiu_vec_lengthen_to_fp32(vec_int16 a, vec_float32 *out1,
+ static vec_int16 inline aiu_vec_convert_to_fp16_inline(vec_int16 a) {
+   vec_int16 work_short_1;
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   /*
+    *  Invoke the VCFN
+    *  "*     VCFN VReg0,VReg2,mask0,mask1      \n\t"
+@@ -249,6 +278,12 @@ static vec_int16 inline aiu_vec_convert_to_fp16_inline(vec_int16 a) {
+                  :  /* "%v0", "%v2"   Clobbered */
+     );
+   // clang-format on
++#elif defined(__clang__)
++  __asm volatile("         VL    2,%[in_vector]              \n"
++                 "         VCFN  0,2,0,1                     \n"
++                 "         VST   0,%[out_vector]             \n"
++                 : [out_vector] "=m"(work_short_1)
++                 : [in_vector] "m"(a));
+ #else
+   // clang-format off
+   __asm volatile(".insn vrr,0xe6000000005D,%[out_vec],%[in_vec],0,1,0,0  \n\t"
+@@ -546,8 +581,8 @@ void saturate_fp32_to_dlf16(const vec_float32 *in_vector_left,
+                             vec_float32 *out_vector_right) {
+ 
+   // Create temp vectors for output
+-  vector float temp_left = (vector float)*in_vector_left;
+-  vector float temp_right = (vector float)*in_vector_right;
++  vec_float32 temp_left = *in_vector_left;
++  vec_float32 temp_right = *in_vector_right;
+ 
+   // For each left and right vectors:
+   // 1. Perform a bitwise AND on the original input vector with dlflt_inf_vec to
+@@ -665,7 +700,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
+     if (curnbr_fields_to_convert > 4) /* if more than 4, partially
+                                       load right vector from data */
+       in_vector_right =
+-          (vec_float32)vec_load_len((const float *)cur_input_data,
++          (vec_float32)vec_load_len((const unsigned int *)cur_input_data,
+                                     (curnbr_fields_to_convert - 4) * 4 - 1); /*
+                                        Partial load right vector with proper
+                                        number of FP32 elements */
+@@ -674,7 +709,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
+   } else { /* Else there are less than 4 values, so partially
+                 load the left, and clear the right */
+     in_vector_left = (vec_float32)vec_load_len(
+-        (const float *)cur_input_data, curnbr_fields_to_convert * 4 - 1);
++        (const unsigned int *)cur_input_data, curnbr_fields_to_convert * 4 - 1);
+     in_vector_right = (vec_float32){0, 0, 0, 0};
+   }
+ 

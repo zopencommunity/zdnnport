@@ -1,0 +1,33 @@
+diff --git a/zdnn/status.c b/zdnn/status.c
+index 550e835..a8a86a3 100644
+--- a/zdnn/status.c
++++ b/zdnn/status.c
+@@ -330,7 +330,7 @@ zdnn_status set_zdnn_status(zdnn_status status, const char *func_name,
+            "===\n");
+     printf("status = 0x%08x, %s\n", status, zdnn_get_status_message(status));
+ 
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+ 
+ #define DUMP_TITLE_SIZE 64
+     printf("Invoking CEE3DMP Language Environment callable service...\n");
+@@ -345,7 +345,7 @@ zdnn_status set_zdnn_status(zdnn_status status, const char *func_name,
+       printf("Failed to invoke CEE3DMP. Return Code: %d.\n", rtn);
+     }
+ 
+-#else
++#elif !defined(__MVS__)
+ 
+ #define MAX_STACK_ENTRIES 30 // max num of stack entries to print
+     printf("Backtrace:\n");
+@@ -364,6 +364,10 @@ zdnn_status set_zdnn_status(zdnn_status status, const char *func_name,
+       free(strings);
+     }
+ 
++#else
++    /* clang on z/OS: no backtrace or ctrace available */
++    printf("Backtrace not available on this platform.\n");
++
+ #endif // __MVS__
+ 
+     printf("==================================================================="

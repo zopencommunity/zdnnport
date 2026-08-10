@@ -1,0 +1,31 @@
+diff --git a/zdnn/stickify.c b/zdnn/stickify.c
+index c45256b..39bca7d 100644
+--- a/zdnn/stickify.c
++++ b/zdnn/stickify.c
+@@ -41,7 +41,7 @@
+ /// prefetch
+ ///
+ static inline void prefetch_read(const void *ptr, uintptr_t offset) {
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   __dcbt((void *)((uintptr_t)ptr + offset));
+ #else
+   __builtin_prefetch((void *)((uintptr_t)ptr + offset), 0);
+@@ -54,7 +54,7 @@ static inline void prefetch_read(const void *ptr, uintptr_t offset) {
+ /// prefetch
+ ///
+ static inline void prefetch_write(const void *ptr, uintptr_t offset) {
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   __dcbtst((void *)((uintptr_t)ptr + offset));
+ #else
+   __builtin_prefetch((void *)((uintptr_t)ptr + offset), 1);
+@@ -66,7 +66,7 @@ static inline void prefetch_write(const void *ptr, uintptr_t offset) {
+ /// \param[in] offset from the base address to the memory block to flush
+ ///
+ static inline void cache_flush(const void *ptr, uintptr_t offset) {
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   __dcbf((void *)((uintptr_t)ptr + offset));
+ #else
+   // No equivalent for non-MVS, leave empty or add necessary code

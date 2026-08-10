@@ -1,0 +1,13 @@
+diff --git a/zdnn/query.c b/zdnn/query.c
+index fa3b452..5e9f054 100644
+--- a/zdnn/query.c
++++ b/zdnn/query.c
+@@ -20,7 +20,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+ #include <cvt.h>
+ #include <ihaecvt.h>
+ #include <ihafacl.h>

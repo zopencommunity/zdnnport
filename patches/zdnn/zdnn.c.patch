@@ -1,0 +1,57 @@
+diff --git a/zdnn/zdnn.c b/zdnn/zdnn.c
+index ca705ea..1f8d39e 100644
+--- a/zdnn/zdnn.c
++++ b/zdnn/zdnn.c
+@@ -23,7 +23,7 @@
+ #include <string.h>
+ #include <strings.h>
+ 
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+ #include <cvt.h>
+ #include <ihaecvt.h>
+ #include <ihafacl.h>
+@@ -276,7 +276,7 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
+   }
+ 
+   // clang-format off
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined(__clang__)
+   struct psa *psaptr =
+       (struct psa *)0;
+   // set _cvt to x10, the pointer to the CVT on z/OS
+@@ -305,7 +305,24 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
+         return ZDNN_STATUS(ZDNN_UNAVAILABLE_FUNCTION,
+                        "NNPA facility unavailable", NO_ARG);
+   }
+-
++#elif defined(__clang__) && defined(__MVS__)
++  // clang on z/OS: use STFLE to check NNPA, HLASM NNPA mnemonic
++  if (zdnn_is_nnpa_installed()) {
++    register uint64_t r1 __asm__("%r1") = (uint64_t)(uintptr_t)parm_block;
++    __asm volatile(
++       "         LLGC  0,%[valfunctionCode]     \n"
++       "         NNPA                           \n"
++       "         IPM   %[cc]                    \n"
++       "         SRL   %[cc],28                 \n"
++       "         LGR   %[areannpa_return],0     \n"
++       : [cc] "+d" (cc),
++         [areannpa_return] "=d" (rtn.r0)
++       : [valfunctionCode] "m" (function_code),
++         "d" (r1)
++       : "r0", "cc");
++  } else {
++	  return ZDNN_STATUS(ZDNN_UNAVAILABLE_FUNCTION, "NNPA facility unavailable", NO_ARG);
++  }
+ #else
+     register uint64_t r0 __asm__("%r0") = function_code;
+     register uint64_t r1 __asm__("%r1") = (uint64_t)parm_block;
+@@ -353,7 +370,7 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
+ /// possible on NNPA_QAF.
+ ///
+ zdnn_status invoke_nnpa_query(nnpa_qaf_parameter_block *qpb) {
+-#if defined(__MVS__)
++#if defined(__MVS__) && !defined (__clang__)
+   /***********************************************************************
+    * On z/OS, use system copy of STFLE output ("faclnnpaf").  (LoZ has to
+    * worry about dynamic changes to STFLE.  z/OS does not support that so

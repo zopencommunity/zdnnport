@@ -1,0 +1,45 @@
+diff --git a/config.zdnn b/config.zdnn
+index 865a16b..5fdbbd0 100644
+--- a/config.zdnn
++++ b/config.zdnn
+@@ -53,6 +53,40 @@ case "${target}" in
+ 	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
+ 	;;
+     *-OS/390)
++	CC=${CC:-clang}
++	CXX=${CXX:-clang++}
++	LD=${LD:-ibm-clang++64}
++	AR=${AR:-ar}
++	ARFLAGS="${ARFLAGS:--rc}"
++	CLANG_INCLUDE_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/include
++	CFLAGS_INIT="-O3 -mzvector -fzvector -Wall -std=gnu11 -fstack-protector-all -fzos-le-char-mode=ascii -mnocsect -fno-short-enums -m64 -mzos-target=zosv2r5 -D_POSIX_C_SOURCE=200809L --config /tmp/clang_zos.cfg -isystem /home/itodoro/zopen/usr/local/zopen/zoslib/zoslib-v4.0.3.20260603_085931.zos/include -include /home/itodoro/zopen/usr/local/zopen/zoslib/zoslib-v4.0.3.20260603_085931.zos/include/zos-v2r5-symbolfixes.h ${CFLAGS_INIT:-}"
++	CFLAGS_QUOTE_INIT="-Wall"
++	CFLAGS_OPT_EXPENSIVE="-funroll-loops"
++	CFLAGS="-O3 -march=z14 -mzvector -Wall -std=gnu11 -fstack-protector-all ${CFLAGS_OPT_EXPENSIVE} ${CFLAGS:-}"
++	CFLAGS_QUOTE="-Wall"
++	CFLAGS_DEBUG="-O0 -g3 ${CFLAGS_DEBUG:-}"
++	CFLAGS_SHARED="-fPIC ${CFLAGS_SHARED:-}"
++	CFLAGS_ASM="-fno-asynchronous-unwind-tables ${CFLAGS_ASM:-}"
++	CFLAGS_NOSEARCH=""
++	CLANG_CXX_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/../../include/c++/v1
++	CXXFLAGS="-O3 -march=z14 -Wall ${CXXFLAGS:-}"
++	CPP_SYMCHECK_FLAGS="-E --config /tmp/clang_zos.cfg -o zdnn.i"
++	SODIR="${SODIR:-lib}"
++	LIBNAME="${LIBNAME:-libzdnn}"
++	LIBSONAME="${LIBSONAME:-${LIBNAME}.so.0}"
++	LIBNAME_PRIVATE="${LIBNAME_PRIVATE:-${LIBNAME}-private}"
++	LIBSONAME_PRIVATE="${LIBSONAME_PRIVATE:-${LIBNAME_PRIVATE}.so.0}"
++	LDFLAGS="${LDFLAGS:-}"
++	LDFLAGS_SHARED="-shared -lm -Wl,-bkeepfile:obj/initializer.o ${LDFLAGS_SHARED:-} ${LDFLAGS:-}"
++	LDFLAGS_SHARED_EXPORTALL="-shared -lm -Wl,-bkeepfile:obj/initializer.o ${LDFLAGS_SHARED_EXPORTALL:-} ${LDFLAGS:-}"
++	LDFLAGS_TEST="-L ../zdnn/${SODIR} -l${LIBNAME_PRIVATE#lib} ../zdnn/${SODIR}/${LIBNAME_PRIVATE}.so -lm ${LDFLAGS_TEST:-} ${LDFLAGS:-}"
++	LD_PATH_VAR="${LD_PATH_VAR:-LIBPATH}"
++	ECHOFLAGS=""
++	ZDNN_TMAKE_FILES="t-static t-libsoname t-gccexpo t-symcheck t-listings"
++	ZDNN_MAKE_TARGETS="${SODIR}/${LIBNAME}.a libsoname symcheck"
++	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
++	;;
++    DISABLED-xlc-OS/390)
+ 	CC=${CC:-xlc}
+ 	CXX=${CXX:-xlC}
+ 	LD=${LD:-xlC}

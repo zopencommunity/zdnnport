@@ -1,0 +1,56 @@
+diff --git a/zdnn/zdnn_private.h b/zdnn/zdnn_private.h
+index aad7eb0..27e2168 100644
+--- a/zdnn/zdnn_private.h
++++ b/zdnn/zdnn_private.h
+@@ -18,16 +18,24 @@
+ #ifndef ZDNN_ZDNN_PRIVATE_H_
+ #define ZDNN_ZDNN_PRIVATE_H_
+ 
++/* clang on z/OS: _Packed is XL C only; map to nothing, structs use __attribute__((packed)) */
++#if defined(__MVS__) && defined(__clang__)
++#define _Packed
++#define vector __vector
++#endif 
++
+ #include <stdarg.h>
+ #include <stdio.h>
+ 
+ // -----------------------------------------------------------------------------
+ // convert_hw.c includes
+ // -----------------------------------------------------------------------------
+-#if defined(__MVS__)    // If z/OS, use XL C include and typedef
+-#include <builtins.h>   // needed for XL C vector ops
+-#else                   // If LoZ, use gcc include and typedef
+-#include <s390intrin.h> // needed for LoZ vector ops
++#if defined(__MVS__) && !defined(__clang__)	// If z/OS, use XL C include and typedef
++#include <builtins.h>   			// needed for XL C vector ops
++#elif defined(__MVS__) && defined(__clang__) 	// clang on z/OS
++#include <vecintrin.h> 
++#else                   			// If LoZ, use gcc include and typedef
++#include <s390intrin.h> 			// needed for LoZ vector ops
+ #endif
+ 
+ #include "../config.h"
+@@ -1547,7 +1555,7 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
+ #define PADDED(x)                                                              \
+   ((uint32_t)CEIL(x, AIU_2BYTE_CELLS_PER_STICK) * AIU_2BYTE_CELLS_PER_STICK)
+ 
+-#if !defined(vec_float) || __ARCH__ < 13
++#if (!defined(vec_float) || __ARCH__ < 13) && !(defined(__MVS__) && defined(__clang__))
+ #undef vec_float
+ #define vec_float(X)                                                           \
+   ({                                                                           \
+@@ -1559,8 +1567,12 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
+     out;                                                                       \
+   })
+ #endif
++#if defined(__MVS__) && defined(__clang__)
++#undef vec_float
++#define vec_float(X) __builtin_convertvector((X), __vector float)
++#endif
+ 
+-#if defined(__GNUC__) && __GNUC__ <= 7
++#if defined(__GNUC__) && __GNUC__ <= 7 && !(defined(__MVS__) && defined(__clang__))
+ #undef vec_round
+ #define vec_round(X)                                                           \
+   ({                                                                           \
