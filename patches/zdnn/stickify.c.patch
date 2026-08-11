@@ -1,5 +1,5 @@
 diff --git a/zdnn/stickify.c b/zdnn/stickify.c
-index c45256b..39bca7d 100644
+index c45256b..8138369 100644
 --- a/zdnn/stickify.c
 +++ b/zdnn/stickify.c
 @@ -41,7 +41,7 @@
@@ -29,3 +29,35 @@ index c45256b..39bca7d 100644
    __dcbf((void *)((uintptr_t)ptr + offset));
  #else
    // No equivalent for non-MVS, leave empty or add necessary code
+@@ -404,6 +404,7 @@ zdnn_status handle_fp_errors(int fe) {
+                        "tuning.",
+                        NO_ARG); // invalid op (bit 8) or overflow (bit 10)
+   }
++#if !(defined(__MVS__) && defined(__clang__))
+   if (fe & FE_INEXACT) {
+     return ZDNN_STATUS(ZDNN_CONVERT_FAILURE,
+                        "Internal error or Live migration happened"
+@@ -411,6 +412,7 @@ zdnn_status handle_fp_errors(int fe) {
+                        NO_ARG); //  inexact (bit 12)
+   }
+ 
++#endif
+   return ZDNN_STATUS_OK;
+ }
+ 
+@@ -431,6 +433,7 @@ zdnn_status handle_fp_errors_saturation(int fe, zdnn_data_types type) {
+     return ZDNN_STATUS(ZDNN_ELEMENT_RANGE_VIOLATION,
+                        "Range violation on tensor data", NO_ARG);
+   }
++#if !(defined(__MVS__) && defined(__clang__))
+   if (fe & FE_INEXACT) {
+     return ZDNN_STATUS(ZDNN_CONVERT_FAILURE,
+                        "Internal error or Live migration happened"
+@@ -438,6 +441,7 @@ zdnn_status handle_fp_errors_saturation(int fe, zdnn_data_types type) {
+                        NO_ARG); //  inexact (bit 12)
+   }
+ 
++#endif
+   return ZDNN_STATUS_OK;
+ }
+ /// Call HW to transform from FP32 -> DLFLOAT16 only.
