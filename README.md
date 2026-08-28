@@ -26,7 +26,7 @@ This port enables zDNN to build and run on z/OS using the IBM Open Enterprise SD
 
 Use the zopen package manager ([QuickStart Guide](https://zopen.community/#/Guides/QuickStart)) to install:
 ```bash
-zopen install zDNN
+zopen install zdnn
 ```
 # Building from Source
 Clone the repository:

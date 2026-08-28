@@ -8,11 +8,11 @@ ZDNN_VERSION="1.1.2"
 ###
 ### Required Environment Variables
 ###
-export ZOPEN_PROJECT_NAME="zDNN"
+export ZOPEN_PROJECT_NAME="zdnn"
 export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_STABLE_URL="https://github.com/ibm/zdnn.git"
-export ZOPEN_STABLE_TAG="v1.1.2"
-export ZOPEN_STABLE_DEPS="make autoconf automake coreutils"
+export ZOPEN_STABLE_TAG="v${ZDNN_VERSION}"
+export ZOPEN_STABLE_DEPS="zoslib make autoconf automake coreutils"
 export ZOPEN_DEV_URL=""
 export ZOPEN_DEV_DEPS=""
 export ZOPEN_CATEGORIES="ai"
