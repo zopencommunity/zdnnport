@@ -1,8 +1,8 @@
 diff --git a/config.zdnn b/config.zdnn
-index 865a16b..14707c1 100644
+index 865a16b..d6d5c07 100644
 --- a/config.zdnn
 +++ b/config.zdnn
-@@ -53,6 +53,53 @@ case "${target}" in
+@@ -53,6 +53,57 @@ case "${target}" in
  	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
  	;;
      *-OS/390)
@@ -12,9 +12,13 @@ index 865a16b..14707c1 100644
 +	AR=${AR:-ar}
 +	ARFLAGS="${ARFLAGS:--rc}"
 +	CLANG_INCLUDE_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/include
-+	# ZDNN_ARCH must be at least z16 (arch14): convert_hw.c assembles the NNPA
-+	# conversion mnemonics VCRNF/VCNF/VCLFNH/VCLFNL/VCFN.
-+	ZDNN_ARCH="${ZDNN_ARCH:-z16}"
++	# Baseline architecture for the library as a whole. Keep this at or below
++	# the consuming application's -march so libzdnn stays loadable on pre-NNPA
++	# hardware: zdnn_init() only issues NNPA-QAF when zdnn_is_nnpa_installed()
++	# says the facility is there, and invoke_nnpa() refuses without it, so a
++	# baseline build simply reports no NNPA and the caller falls back.
++	# convert_hw.c is assembled at a higher arch on its own; see zdnn/Makefile.
++	ZDNN_ARCH="${ZDNN_ARCH:-z15}"
 +	# ZOSLIB_HOME is exported by the zoslib zopen dependency; never hardcode it.
 +	ZDNN_ZOSLIB_FLAGS=""
 +	if test -n "${ZOSLIB_HOME:-}"; then

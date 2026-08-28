@@ -14,8 +14,13 @@ This port enables zDNN to build and run on z/OS using the IBM Open Enterprise SD
 > function set. On z15 and earlier there is no NNPA facility: `zdnn_is_nnpa_installed()`
 > returns 0 and NNPA operations are unavailable.
 >
-> Note that this port compiles for `-march=z16` by default (`ZDNN_ARCH` in `config.zdnn`),
-> so the built library will not load on pre-z16 hardware at all.
+> The library itself builds at a **z15 baseline** (`ZDNN_ARCH` in `config.zdnn`) and
+> detects NNPA at run time via STFLE bit 165, so one binary covers both: on z16 and
+> later it uses the accelerator, on z15 and earlier `zdnn_is_nnpa_installed()` returns
+> 0, `zdnn_init()` skips NNPA-QAF, `invoke_nnpa()` returns `ZDNN_UNAVAILABLE_FUNCTION`,
+> and the caller falls back. Only `convert_hw.c` -- which spells out the arch14
+> conversion mnemonics and whose routines are unreachable without NNPA -- is
+> assembled for z16, via `ZDNN_NNPA_ARCH` (see `zdnn/Makefile`).
 
 # Installation and Usage
 
