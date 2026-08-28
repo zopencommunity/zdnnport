@@ -1,4 +1,4 @@
-[![Automatic version updates](https://github.com/zopencommunity/zDNNport/actions/workflows/bump.yml/badge.svg)](https://github.com/zopencommunity/zDNNport/actions/workflows/bump.yml)
+[![Automatic version updates](https://github.com/zopencommunity/zdnnport/actions/workflows/bump.yml/badge.svg)](https://github.com/zopencommunity/zdnnport/actions/workflows/bump.yml)
 
 # zDNN
 
@@ -31,8 +31,8 @@ zopen install zdnn
 # Building from Source
 Clone the repository:
 ```bash 
-git clone https://github.com/zopencommunity/zDNNport.git
-cd zDNNport
+git clone https://github.com/zopencommunity/zdnnport.git
+cd zdnnport
 ```
 Build using zopen:
 ```bash

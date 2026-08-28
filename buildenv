@@ -1,4 +1,4 @@
-# bump: zDNN-version /ZDNN_VERSION="(.*)"/ https://github.com/ibm/zdnn.git|semver:*
+# bump: zdnn-version /ZDNN_VERSION="(.*)"/ https://github.com/ibm/zdnn.git|semver:*
 ZDNN_VERSION="1.1.2"
 
 ###
