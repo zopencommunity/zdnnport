@@ -1,25 +1,22 @@
 diff --git a/zdnn/convert_hw.c b/zdnn/convert_hw.c
-index d9ff305..afde76b 100644
+index d9ff305..1a5cf71 100644
 --- a/zdnn/convert_hw.c
 +++ b/zdnn/convert_hw.c
-@@ -37,14 +37,19 @@ vec_char8 selection_vector = {0,  1,  4,  5,  8,  9,  12, 13,
+@@ -37,6 +37,10 @@ vec_char8 selection_vector = {0,  1,  4,  5,  8,  9,  12, 13,
                                16, 17, 20, 21, 24, 25, 28, 29};
  static vec_int16 zero_vector16 = {0, 0, 0, 0, 0, 0, 0, 0};
  // 4 vector of the MIN DFL16 value represented as FP32
-+#if defined(__MVS__) && defined(__clang__)
-+static const vec_float32 dlflt_min_vec = {0xCFFF8000, 0xCFFF8000, 0xCFFF8000, 0xCFFF8000};
-+static const vec_float32 dlflt_max_vec = {0x4FFF8000, 0x4FFF8000, 0x4FFF8000, 0x4FFF8000};
-+static const vec_float32 dlflt_inf_vec = {0x7F800000, 0x7F800000, 0x7F800000, 0x7F800000};
-+#else
++// These must stay FLOAT vectors: saturate_fp32_to_dlf16() compares against them
++// with vec_min/vec_max, and those are type-driven. Declaring them as
++// vec_float32 (vector unsigned int) silently turns the clamp into an UNSIGNED
++// integer clamp of the bit patterns, which destroys every finite input.
  static const vector float dlflt_min_vec = {
      DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32, DLF16_MIN_AS_FP32};
--// 4 vector of the MAX DFL16 value represented as FP32
- static const vector float dlflt_max_vec = {
-     DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32, DLF16_MAX_AS_FP32};
--
+ // 4 vector of the MAX DFL16 value represented as FP32
+@@ -45,6 +49,7 @@ static const vector float dlflt_max_vec = {
+ 
  static const vector float dlflt_inf_vec = {INFINITY, INFINITY, INFINITY,
                                             INFINITY};
-+#endif
 +
  /***********************************************************************
   * aiu_vec_round_from_fp32 routines
@@ -118,17 +115,6 @@ index d9ff305..afde76b 100644
  #else
    // clang-format off
    __asm volatile(".insn vrr,0xe6000000005D,%[out_vec],%[in_vec],0,1,0,0  \n\t"
-@@ -546,8 +581,8 @@ void saturate_fp32_to_dlf16(const vec_float32 *in_vector_left,
-                             vec_float32 *out_vector_right) {
- 
-   // Create temp vectors for output
--  vector float temp_left = (vector float)*in_vector_left;
--  vector float temp_right = (vector float)*in_vector_right;
-+  vec_float32 temp_left = *in_vector_left;
-+  vec_float32 temp_right = *in_vector_right;
- 
-   // For each left and right vectors:
-   // 1. Perform a bitwise AND on the original input vector with dlflt_inf_vec to
 @@ -665,7 +700,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
      if (curnbr_fields_to_convert > 4) /* if more than 4, partially
                                        load right vector from data */

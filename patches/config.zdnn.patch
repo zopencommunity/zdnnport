@@ -1,8 +1,8 @@
 diff --git a/config.zdnn b/config.zdnn
-index 865a16b..5fdbbd0 100644
+index 865a16b..14707c1 100644
 --- a/config.zdnn
 +++ b/config.zdnn
-@@ -53,6 +53,40 @@ case "${target}" in
+@@ -53,6 +53,53 @@ case "${target}" in
  	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
  	;;
      *-OS/390)
@@ -12,18 +12,31 @@ index 865a16b..5fdbbd0 100644
 +	AR=${AR:-ar}
 +	ARFLAGS="${ARFLAGS:--rc}"
 +	CLANG_INCLUDE_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/include
-+	CFLAGS_INIT="-O3 -mzvector -fzvector -Wall -std=gnu11 -fstack-protector-all -fzos-le-char-mode=ascii -mnocsect -fno-short-enums -m64 -mzos-target=zosv2r5 -D_POSIX_C_SOURCE=200809L --config /tmp/clang_zos.cfg -isystem /home/itodoro/zopen/usr/local/zopen/zoslib/zoslib-v4.0.3.20260603_085931.zos/include -include /home/itodoro/zopen/usr/local/zopen/zoslib/zoslib-v4.0.3.20260603_085931.zos/include/zos-v2r5-symbolfixes.h ${CFLAGS_INIT:-}"
++	# ZDNN_ARCH must be at least z16 (arch14): convert_hw.c assembles the NNPA
++	# conversion mnemonics VCRNF/VCNF/VCLFNH/VCLFNL/VCFN.
++	ZDNN_ARCH="${ZDNN_ARCH:-z16}"
++	# ZOSLIB_HOME is exported by the zoslib zopen dependency; never hardcode it.
++	ZDNN_ZOSLIB_FLAGS=""
++	if test -n "${ZOSLIB_HOME:-}"; then
++		ZDNN_ZOSLIB_FLAGS="-isystem ${ZOSLIB_HOME}/include -include ${ZOSLIB_HOME}/include/zos-v2r5-symbolfixes.h"
++	fi
++	# Enum width is ABI: zdnn_tensor_desc leads with three enum fields, so every
++	# translation unit here and every consumer of zdnn.h must agree. Use the
++	# ibm-clang default (short enums, matching the XL C ABI) instead of forcing
++	# -fno-short-enums onto zdnn_init.c alone.
++	ZDNN_COMMON_CFLAGS="-mzvector -fzvector -Wall -std=gnu11 -fstack-protector-all -fzos-le-char-mode=ascii -mnocsect -m64 -mzos-target=zosv2r5 -march=${ZDNN_ARCH} -mzos-sys-include=/usr/include -D_POSIX_C_SOURCE=200809L ${ZDNN_ZOSLIB_FLAGS}"
++	CFLAGS_INIT="-O3 ${ZDNN_COMMON_CFLAGS} ${CFLAGS_INIT:-}"
 +	CFLAGS_QUOTE_INIT="-Wall"
 +	CFLAGS_OPT_EXPENSIVE="-funroll-loops"
-+	CFLAGS="-O3 -march=z14 -mzvector -Wall -std=gnu11 -fstack-protector-all ${CFLAGS_OPT_EXPENSIVE} ${CFLAGS:-}"
++	CFLAGS="-O3 ${ZDNN_COMMON_CFLAGS} ${CFLAGS_OPT_EXPENSIVE} ${CFLAGS:-}"
 +	CFLAGS_QUOTE="-Wall"
 +	CFLAGS_DEBUG="-O0 -g3 ${CFLAGS_DEBUG:-}"
 +	CFLAGS_SHARED="-fPIC ${CFLAGS_SHARED:-}"
 +	CFLAGS_ASM="-fno-asynchronous-unwind-tables ${CFLAGS_ASM:-}"
 +	CFLAGS_NOSEARCH=""
 +	CLANG_CXX_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/../../include/c++/v1
-+	CXXFLAGS="-O3 -march=z14 -Wall ${CXXFLAGS:-}"
-+	CPP_SYMCHECK_FLAGS="-E --config /tmp/clang_zos.cfg -o zdnn.i"
++	CXXFLAGS="-O3 -Wall -m64 -mzos-target=zosv2r5 -march=${ZDNN_ARCH} -mzos-sys-include=/usr/include ${CXXFLAGS:-}"
++	CPP_SYMCHECK_FLAGS="-E -mzos-sys-include=/usr/include -o zdnn.i"
 +	SODIR="${SODIR:-lib}"
 +	LIBNAME="${LIBNAME:-libzdnn}"
 +	LIBSONAME="${LIBSONAME:-${LIBNAME}.so.0}"

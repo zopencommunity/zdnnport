@@ -1,16 +1,21 @@
-[![Automatic version updates](https://github.com/zopencommunity/zDNNport/actions/workflows/bump.yml/badge.svg)](https://github.com/ZOSOpenTools/zDNNport/actions/workflows/bump.yml)
+[![Automatic version updates](https://github.com/zopencommunity/zDNNport/actions/workflows/bump.yml/badge.svg)](https://github.com/zopencommunity/zDNNport/actions/workflows/bump.yml)
 
 # zDNN
 
-IBM z Deep Neural Network (zDNN) Library — provides a C API for the Neural Network Processing Assist (NNPA) facility on IBM z17 / LinuxONE 5 hardware.
+IBM z Deep Neural Network (zDNN) Library — provides a C API for the Neural Network Processing Assist (NNPA) facility of the IBM Integrated Accelerator for AI, available on IBM z16 / LinuxONE 4 (Telum I) and later.
 
 zDNN accelerates neural network operations (matrix multiply, activation functions, data format conversion) using the NNPA co-processor, which is particularly effective for prefill-dominated workloads such as embedding generation and LLM inference.
 
 This port enables zDNN to build and run on z/OS using the IBM Open Enterprise SDK for C/C++ (clang). The upstream project targets Linux on Z with GCC and IBM XL C; this port adds z/OS clang support.
 
-> **Hardware requirement:** NNPA acceleration requires IBM z17 / LinuxONE 5.
-> On earlier hardware (z15, z16), the library builds and initializes correctly
-> but `zdnn_is_nnpa_installed()` returns 0 and NNPA operations are unavailable.
+> **Hardware requirement:** NNPA acceleration requires the Integrated Accelerator for AI,
+> introduced with IBM z16 / LinuxONE 4 (Telum I). IBM z17 / LinuxONE 5 (Telum II) adds NNPA
+> parameter block format 1 and INT8 support, which zDNN 1.1.x exposes on top of the Telum I
+> function set. On z15 and earlier there is no NNPA facility: `zdnn_is_nnpa_installed()`
+> returns 0 and NNPA operations are unavailable.
+>
+> Note that this port compiles for `-march=z16` by default (`ZDNN_ARCH` in `config.zdnn`),
+> so the built library will not load on pre-z16 hardware at all.
 
 # Installation and Usage
 
@@ -53,7 +58,7 @@ Build flags required: ```-fzvector``` ```-mzvector``` ```-march=z16``` ```-D_POS
 
 # Troubleshooting 
 ```zdnn_is_nnpa_installed()``` returns ```0```  
-&rarr; The machine does not have NNPA hardware. Requires IBM z17 / LinuxONE 5.
+&rarr; The machine does not have NNPA hardware (STFLE facility bit 165). Requires IBM z16 / LinuxONE 4 or later.
 
 Build fails with ```cannot use 'float' with '__vector'```  
 &rarr; Ensure ```-fzvector``` ```-mzvector``` ```-march=z16``` are in Z```OPEN_EXTRA_CFLAGS```.

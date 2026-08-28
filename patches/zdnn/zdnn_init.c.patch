@@ -1,5 +1,5 @@
 diff --git a/zdnn/zdnn_init.c b/zdnn/zdnn_init.c
-index 1737854..e96440d 100644
+index 1737854..5c8ade2 100644
 --- a/zdnn/zdnn_init.c
 +++ b/zdnn/zdnn_init.c
 @@ -21,7 +21,11 @@
@@ -25,7 +25,7 @@ index 1737854..e96440d 100644
  void zdnn_init() {
  
    char *ptr, *endptr;
-@@ -115,34 +122,54 @@ void zdnn_init() {
+@@ -115,34 +122,52 @@ void zdnn_init() {
    }
  }
  
@@ -37,14 +37,12 @@ index 1737854..e96440d 100644
 +static int invoke_stfle(unsigned char *facility_list) {
 +  register uint64_t r0 __asm__("%r0") = STFLE_LENGTH / 8 - 1;
 +  int cc;
-+  struct facility_list_type {
-+    unsigned char flist[STFLE_LENGTH];
-+  };
 +
-+  if (precheck_enabled) {
-+    if ((uintptr_t)facility_list & 7)
-+      return ZDNN_STATUS_NO_MSG(ZDNN_MISALIGNED_PARMBLOCK);
-+  }
++  /* unlike the "+Q" form below this always dereferences facility_list, so the
++     alignment precondition is checked unconditionally rather than only under
++     ZDNN_ENABLE_PRECHECK. */
++  if ((uintptr_t)facility_list & 7)
++    return ZDNN_STATUS_NO_MSG(ZDNN_MISALIGNED_PARMBLOCK);
 +
 +  __asm volatile(
 +       "         STFLE 0(%[flist])               \n"
@@ -86,7 +84,7 @@ index 1737854..e96440d 100644
  
  static inline int check_bitfield(const uint8_t *bitfield, int bitno) {
    uint8_t mask = (1 << 7) >> (bitno & 7);
-@@ -174,6 +201,24 @@ bool zdnn_is_nnpa_installed() {
+@@ -174,6 +199,26 @@ bool zdnn_is_nnpa_installed() {
  
    nnpa_supported = check_bitfield(facilities, STFLE_NNPA);
  
@@ -97,7 +95,9 @@ index 1737854..e96440d 100644
 +#elif defined(__clang__)
 +  /* clang on z/OS: cvt.h not available, use STFLE like Linux */
 +  int nnpa_supported;
-+  unsigned char facilities[STFLE_LENGTH] = {0};
++  /* STFLE takes a doubleword-aligned operand; a plain char array is only
++     byte-aligned as far as the compiler is concerned. */
++  unsigned char facilities[STFLE_LENGTH] __attribute__((aligned(8))) = {0};
 +  int cc;
 +  cc = invoke_stfle(facilities);
 +
