@@ -1,0 +1,23 @@
+diff --git a/zdnn/Makefile b/zdnn/Makefile
+index a6a214b..16abe83 100644
+--- a/zdnn/Makefile
++++ b/zdnn/Makefile
+@@ -44,6 +44,18 @@ $(INIT_OBJFILE): $(INIT_SRCFILE)
+ $(OBJDIR)/%.o: %.c
+ 	$(CC) $(CFLAGS) $(CFLAGS_SHARED) -c $< -o $@
+ 
++# convert_hw.c is the only file that spells out NNPA instruction mnemonics
++# (VCRNF/VCNF/VCLFNH/VCLFNL/VCFN), which are arch14, so it is the only file that
++# has to be *assembled* for z16 or later. Every routine in it is a DLFLOAT16
++# conversion that is unreachable without the NNPA facility, and on z/OS the
++# VEC_* macros route to them out of line, so keeping the arch bump confined here
++# lets the rest of the library stay at the baseline and load on pre-z16 hardware.
++# Empty by default: platforms that encode these as raw bytes need nothing extra.
++ZDNN_NNPA_ARCH_FLAGS ?=
++
++$(OBJDIR)/convert_hw.o: convert_hw.c
++	$(CC) $(CFLAGS) $(ZDNN_NNPA_ARCH_FLAGS) $(CFLAGS_SHARED) -c $< -o $@
++
+ $(OBJDIR)/%.o: %.cpp
+ 	$(CXX) $(CXXFLAGS) $(CFLAGS_SHARED) -c $< -o $@
+ 

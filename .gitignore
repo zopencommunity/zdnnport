@@ -6,5 +6,5 @@ install/
 .zoslib_hooks/
 
 # Ignore source directories created by zopen-build
-zdnn-*/
-zdnn/
+/zdnn-*/
+/zdnn/
