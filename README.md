@@ -2,7 +2,7 @@
 
 # zDNN
 
-IBM z Deep Neural Network (zDNN) Library — provides a C API for the Neural Network Processing Assist (NNPA) facility of the IBM Integrated Accelerator for AI, available on IBM z16 / LinuxONE 4 (Telum I) and later.
+IBM z Deep Neural Network (zDNN) Library - provides a C API for the Neural Network Processing Assist (NNPA) facility of the IBM Integrated Accelerator for AI, available on IBM z16 / LinuxONE 4 (Telum I) and later.
 
 zDNN accelerates neural network operations (matrix multiply, activation functions, data format conversion) using the NNPA co-processor, which is particularly effective for prefill-dominated workloads such as embedding generation and LLM inference.
 

@@ -8,7 +8,7 @@ so the existing GCC and XL C builds are untouched.
 
 ## Build configuration
 
-**config.zdnn** — new `*-OS/390` clang target
+**config.zdnn** - new `*-OS/390` clang target
 - Adds a clang case (z/OS `uname -m` reports the machine model, not `s390x`); the
   original XL C case is kept as `DISABLED-xlc-OS/390`.
 - One shared `ZDNN_COMMON_CFLAGS` feeds both `CFLAGS` and `CFLAGS_INIT`. The
@@ -25,7 +25,7 @@ so the existing GCC and XL C builds are untouched.
   `-fno-short-enums` moves `dim1` from offset 16 to 24 and changes `sizeof` from
   20 to 28.
 
-**zdnn/Makefile** — per-file architecture level
+**zdnn/Makefile** - per-file architecture level
 - `convert_hw.c` gets its own rule so `ZDNN_NNPA_ARCH_FLAGS` can raise the
   assembler architecture for that file alone. It is the only file spelling out
   arch14 NNPA mnemonics, and every routine in it is unreachable without the
@@ -53,7 +53,7 @@ so the existing GCC and XL C builds are untouched.
   STFLE is serializing; z/OS cannot change the facility list under a running
   program, which is why the XL C path reads the static system copy.
 
-**zdnn/query.c** — guards the XL C-only system headers.
+**zdnn/query.c** - guards the XL C-only system headers.
 
 ## Vector conversion
 
@@ -89,5 +89,5 @@ so the existing GCC and XL C builds are untouched.
   environment around the conversion (`feholdexcept` / `fesetenv`) rather than
   dropping the check, which also loses genuine live-migration detection.
 
-**zdnn/status.c** — guards the XL C `CEE3DMP` dump path and the `backtrace()` path,
+**zdnn/status.c** - guards the XL C `CEE3DMP` dump path and the `backtrace()` path,
 and prints a placeholder for z/OS clang, which has neither.
