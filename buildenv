@@ -29,14 +29,14 @@ zopen_init() {
 }
 
 zopen_pre_patch() {
-	echo "PREPATCH: pwd=$PWD arg1=$1"
-	echo "PREPATCH: zdnn/.git exists? $([ -d zdnn/.git ] && echo yes || echo no)"
-	if [ -d "zdnn/.git" ]; then
-		echo "PREPATCH: dirty before = $(cd zdnn && git status --porcelain --untracked-files=no | wc -l)"
-		(cd zdnn && git reset --hard); echo "PREPATCH: reset rc=$?"
-		echo "PREPATCH: dirty after  = $(cd zdnn && git status --porcelain --untracked-files=no | wc -l)"
-		(cd zdnn && git status --porcelain --untracked-files=no | head -3)
-	fi
+	cd zdnn || return 0
+	echo "PREPATCH: A-before = $(git status --porcelain -uno | wc -l)"
+	(unset _BPXK_AUTOCVT; git reset --hard -q)
+	echo "PREPATCH: A-after(unset AUTOCVT) = $(git status --porcelain -uno | wc -l)"
+	printf '* -text\n* !zos-working-tree-encoding\n' > .git/info/attributes
+	git reset --hard -q
+	echo "PREPATCH: B-after(info/attributes) = $(git status --porcelain -uno | wc -l)"
+	cd ..
 }
 export ZOPEN_CONFIGURE="./configure"
 export ZOPEN_CONFIGURE_OPTS="--prefix=\${ZOPEN_INSTALL_DIR} CC=ibm-clang64 CXX=ibm-clang++64"
