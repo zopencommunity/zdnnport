@@ -27,6 +27,18 @@ export ZOPEN_RUNTIME_DEPS=""
 zopen_init() {
 	autoreconf -fi
 }
+
+zopen_pre_patch() {
+	# zopen chtags the freshly cloned tree before this point. Upstream zdnn ships a
+	# .gitattributes with "* text=auto", so after tagging git reports every file as
+	# modified, applyPatches finds a dirty tree and skips every patch -- quietly,
+	# and the step still succeeds. The build then fails much later in configure with
+	# "C compiler cannot create executables", because config.zdnn never got its
+	# z/OS clang target. Reset so the tree is clean when patches are applied.
+	if [ -d "zdnn/.git" ]; then
+		(cd zdnn && git reset --hard -q)
+	fi
+}
 export ZOPEN_CONFIGURE="./configure"
 export ZOPEN_CONFIGURE_OPTS="--prefix=\${ZOPEN_INSTALL_DIR} CC=ibm-clang64 CXX=ibm-clang++64"
 export ZOPEN_MAKE="make"
