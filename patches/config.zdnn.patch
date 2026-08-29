@@ -1,11 +1,14 @@
 diff --git a/config.zdnn b/config.zdnn
-index 865a16b..d6d5c07 100644
+index 865a16b..e3369be 100644
 --- a/config.zdnn
 +++ b/config.zdnn
-@@ -53,6 +53,57 @@ case "${target}" in
+@@ -53,6 +53,60 @@ case "${target}" in
  	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
  	;;
      *-OS/390)
++	# NOTE: -bkeepfile is an AIX ld option; the z/OS binder rejects it with
++	# IEW2290E. initializer.o is named explicitly on the link line, and
++	# zdnn_init() carries __attribute__((constructor)), so nothing is lost.
 +	CC=${CC:-clang}
 +	CXX=${CXX:-clang++}
 +	LD=${LD:-ibm-clang++64}
@@ -47,8 +50,8 @@ index 865a16b..d6d5c07 100644
 +	LIBNAME_PRIVATE="${LIBNAME_PRIVATE:-${LIBNAME}-private}"
 +	LIBSONAME_PRIVATE="${LIBSONAME_PRIVATE:-${LIBNAME_PRIVATE}.so.0}"
 +	LDFLAGS="${LDFLAGS:-}"
-+	LDFLAGS_SHARED="-shared -lm -Wl,-bkeepfile:obj/initializer.o ${LDFLAGS_SHARED:-} ${LDFLAGS:-}"
-+	LDFLAGS_SHARED_EXPORTALL="-shared -lm -Wl,-bkeepfile:obj/initializer.o ${LDFLAGS_SHARED_EXPORTALL:-} ${LDFLAGS:-}"
++	LDFLAGS_SHARED="-shared -lm ${LDFLAGS_SHARED:-} ${LDFLAGS:-}"
++	LDFLAGS_SHARED_EXPORTALL="-shared -lm ${LDFLAGS_SHARED_EXPORTALL:-} ${LDFLAGS:-}"
 +	LDFLAGS_TEST="-L ../zdnn/${SODIR} -l${LIBNAME_PRIVATE#lib} ../zdnn/${SODIR}/${LIBNAME_PRIVATE}.so -lm ${LDFLAGS_TEST:-} ${LDFLAGS:-}"
 +	LD_PATH_VAR="${LD_PATH_VAR:-LIBPATH}"
 +	ECHOFLAGS=""
