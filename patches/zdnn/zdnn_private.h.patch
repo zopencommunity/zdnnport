@@ -1,8 +1,8 @@
 diff --git a/zdnn/zdnn_private.h b/zdnn/zdnn_private.h
-index aad7eb0..27e2168 100644
+index aad7eb0..9258728 100644
 --- a/zdnn/zdnn_private.h
 +++ b/zdnn/zdnn_private.h
-@@ -18,16 +18,24 @@
+@@ -18,16 +18,27 @@
  #ifndef ZDNN_ZDNN_PRIVATE_H_
  #define ZDNN_ZDNN_PRIVATE_H_
  
@@ -10,7 +10,7 @@ index aad7eb0..27e2168 100644
 +#if defined(__MVS__) && defined(__clang__)
 +#define _Packed
 +#define vector __vector
-+#endif 
++#endif
 +
  #include <stdarg.h>
  #include <stdio.h>
@@ -22,16 +22,19 @@ index aad7eb0..27e2168 100644
 -#include <builtins.h>   // needed for XL C vector ops
 -#else                   // If LoZ, use gcc include and typedef
 -#include <s390intrin.h> // needed for LoZ vector ops
-+#if defined(__MVS__) && !defined(__clang__)	// If z/OS, use XL C include and typedef
-+#include <builtins.h>   			// needed for XL C vector ops
-+#elif defined(__MVS__) && defined(__clang__) 	// clang on z/OS
-+#include <vecintrin.h> 
++// z/OS, XL C and clang alike: <builtins.h> is what brings in the vector
++// intrinsics. Do NOT include <vecintrin.h> directly. It carries no include
++// guard, and under ibm-clang <stdlib.h> already pulls it in through
++// zos_wrappers/builtins.h, so a second include redefines every vec_* function
++// and the translation unit fails to compile.
++#if defined(__MVS__)
++#include <builtins.h>
 +#else                   			// If LoZ, use gcc include and typedef
 +#include <s390intrin.h> 			// needed for LoZ vector ops
  #endif
  
  #include "../config.h"
-@@ -1547,7 +1555,7 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
+@@ -1547,7 +1558,7 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
  #define PADDED(x)                                                              \
    ((uint32_t)CEIL(x, AIU_2BYTE_CELLS_PER_STICK) * AIU_2BYTE_CELLS_PER_STICK)
  
@@ -40,7 +43,7 @@ index aad7eb0..27e2168 100644
  #undef vec_float
  #define vec_float(X)                                                           \
    ({                                                                           \
-@@ -1559,8 +1567,12 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
+@@ -1559,8 +1570,12 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
      out;                                                                       \
    })
  #endif
