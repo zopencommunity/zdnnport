@@ -29,14 +29,13 @@ zopen_init() {
 }
 
 zopen_pre_patch() {
-	# zopen chtags the freshly cloned tree before this point. Upstream zdnn ships a
-	# .gitattributes with "* text=auto", so after tagging git reports every file as
-	# modified, applyPatches finds a dirty tree and skips every patch -- quietly,
-	# and the step still succeeds. The build then fails much later in configure with
-	# "C compiler cannot create executables", because config.zdnn never got its
-	# z/OS clang target. Reset so the tree is clean when patches are applied.
+	echo "PREPATCH: pwd=$PWD arg1=$1"
+	echo "PREPATCH: zdnn/.git exists? $([ -d zdnn/.git ] && echo yes || echo no)"
 	if [ -d "zdnn/.git" ]; then
-		(cd zdnn && git reset --hard -q)
+		echo "PREPATCH: dirty before = $(cd zdnn && git status --porcelain --untracked-files=no | wc -l)"
+		(cd zdnn && git reset --hard); echo "PREPATCH: reset rc=$?"
+		echo "PREPATCH: dirty after  = $(cd zdnn && git status --porcelain --untracked-files=no | wc -l)"
+		(cd zdnn && git status --porcelain --untracked-files=no | head -3)
 	fi
 }
 export ZOPEN_CONFIGURE="./configure"
