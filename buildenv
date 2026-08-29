@@ -29,14 +29,22 @@ zopen_init() {
 }
 
 zopen_pre_patch() {
-	cd zdnn || return 0
-	echo "PREPATCH: A-before = $(git status --porcelain -uno | wc -l)"
-	(unset _BPXK_AUTOCVT; git reset --hard -q)
-	echo "PREPATCH: A-after(unset AUTOCVT) = $(git status --porcelain -uno | wc -l)"
-	printf '* -text\n* !zos-working-tree-encoding\n' > .git/info/attributes
-	git reset --hard -q
-	echo "PREPATCH: B-after(info/attributes) = $(git status --porcelain -uno | wc -l)"
-	cd ..
+	# zopen chtags the freshly cloned tree between getCode and applyPatches.
+	# Upstream zdnn ships a .gitattributes with "* text=auto" plus
+	# zos-working-tree-encoding=iso8859-1, and four of its files carry UTF-8
+	# non-breaking spaces (U+00A0) that do not survive that round trip. git then
+	# reports Makefile, config.make.in, config.zdnn and configure.ac as modified
+	# permanently, applyPatches finds a dirty tree and silently skips all nine
+	# patches while still exiting zero. The build then fails much later in
+	# configure with "C compiler cannot create executables", because config.zdnn
+	# never received its z/OS clang target.
+	#
+	# $GIT_DIR/info/attributes outranks the in-tree .gitattributes, so switch the
+	# conversion off there and reset. A plain git reset --hard is not enough: the
+	# files come back through the same filter and are dirty again immediately.
+	[ -d zdnn/.git ] || return 0
+	printf '* -text\n* !zos-working-tree-encoding\n' > zdnn/.git/info/attributes
+	(cd zdnn && git reset --hard -q)
 }
 export ZOPEN_CONFIGURE="./configure"
 export ZOPEN_CONFIGURE_OPTS="--prefix=\${ZOPEN_INSTALL_DIR} CC=ibm-clang64 CXX=ibm-clang++64"

@@ -68,6 +68,14 @@ Build flags required: ```-fzvector``` ```-mzvector``` ```-march=z16``` ```-D_POS
 Build fails with ```cannot use 'float' with '__vector'```  
 &rarr; Ensure ```-fzvector``` ```-mzvector``` ```-march=z16``` are in Z```OPEN_EXTRA_CFLAGS```.
 
+`Existing Changes are active in .../zdnn` and the build later fails with
+`C compiler cannot create executables`
+&rarr; The patches were skipped. Upstream's `.gitattributes` does not round-trip
+through `zos-working-tree-encoding`, leaving four files permanently modified.
+`zopen_pre_patch` in `buildenv` handles this; if you build by hand, write
+`* -text` and `* !zos-working-tree-encoding` into `zdnn/.git/info/attributes`
+and `git reset --hard` before patching.
+
 autoreconf not found during bootstrap  
 &rarr; Ensure ```autoconf``` and ```automake``` are in ```ZOPEN_STABLE_DEPS``` and installed via zopen.
 
