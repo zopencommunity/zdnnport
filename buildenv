@@ -47,7 +47,11 @@ zopen_pre_patch() {
 	(cd zdnn && git reset --hard -q)
 }
 export ZOPEN_CONFIGURE="./configure"
-export ZOPEN_CONFIGURE_OPTS="--prefix=\${ZOPEN_INSTALL_DIR} CC=ibm-clang64 CXX=ibm-clang++64"
+# Do not pin CC/CXX here. zopen-build selects the compiler (check_clang prefers
+# the Open Enterprise SDK clang and falls back to Open XL ibm-clang64) and passes
+# it on the configure line; hardcoding the Open XL names breaks any builder that
+# only has the other compiler installed.
+export ZOPEN_CONFIGURE_OPTS="--prefix=\${ZOPEN_INSTALL_DIR}"
 export ZOPEN_MAKE="make"
 # config.zdnn derives CFLAGS/CFLAGS_INIT for the *-OS/390 clang target, including
 # -O3 and the ZOSLIB_HOME includes. Overriding CFLAGS_INIT on the make line

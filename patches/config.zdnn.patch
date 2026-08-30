@@ -1,8 +1,8 @@
 diff --git a/config.zdnn b/config.zdnn
-index 865a16b..e3369be 100644
+index 865a16b..27e832f 100644
 --- a/config.zdnn
 +++ b/config.zdnn
-@@ -53,6 +53,60 @@ case "${target}" in
+@@ -53,6 +53,63 @@ case "${target}" in
  	ZDNN_INSTALL_TARGETS="install_libsoname install_static"
  	;;
      *-OS/390)
@@ -11,7 +11,10 @@ index 865a16b..e3369be 100644
 +	# zdnn_init() carries __attribute__((constructor)), so nothing is lost.
 +	CC=${CC:-clang}
 +	CXX=${CXX:-clang++}
-+	LD=${LD:-ibm-clang++64}
++	# Link with whichever C++ driver is actually in use. Two compilers build
++	# this port -- Open XL (ibm-clang++64) and the Open Enterprise SDK
++	# (clang++) -- and only one of them is on PATH on any given machine.
++	LD=${LD:-${CXX}}
 +	AR=${AR:-ar}
 +	ARFLAGS="${ARFLAGS:--rc}"
 +	CLANG_INCLUDE_DIR=$(ibm-clang64 -print-resource-dir 2>/dev/null)/include
