@@ -1,8 +1,8 @@
 diff --git a/zdnn/Makefile b/zdnn/Makefile
-index a6a214b..16abe83 100644
+index a6a214b..89a8e4c 100644
 --- a/zdnn/Makefile
 +++ b/zdnn/Makefile
-@@ -44,6 +44,18 @@ $(INIT_OBJFILE): $(INIT_SRCFILE)
+@@ -44,6 +44,25 @@ $(INIT_OBJFILE): $(INIT_SRCFILE)
  $(OBJDIR)/%.o: %.c
  	$(CC) $(CFLAGS) $(CFLAGS_SHARED) -c $< -o $@
  
@@ -16,6 +16,13 @@ index a6a214b..16abe83 100644
 +ZDNN_NNPA_ARCH_FLAGS ?=
 +
 +$(OBJDIR)/convert_hw.o: convert_hw.c
++	$(CC) $(CFLAGS) $(ZDNN_NNPA_ARCH_FLAGS) $(CFLAGS_SHARED) -c $< -o $@
++
++# zdnn.c spells out the NNPA instruction itself. HLASM assembles it at any
++# -march, but the LLVM integrated assembler used by the Open Enterprise SDK
++# clang gates it on arch14, so this file needs the same bump. Everything it
++# contains is NNPA invocation, unreachable without the facility.
++$(OBJDIR)/zdnn.o: zdnn.c
 +	$(CC) $(CFLAGS) $(ZDNN_NNPA_ARCH_FLAGS) $(CFLAGS_SHARED) -c $< -o $@
 +
  $(OBJDIR)/%.o: %.cpp

@@ -1,5 +1,5 @@
 diff --git a/zdnn/zdnn.c b/zdnn/zdnn.c
-index ca705ea..1ac4103 100644
+index ca705ea..34072e3 100644
 --- a/zdnn/zdnn.c
 +++ b/zdnn/zdnn.c
 @@ -23,7 +23,7 @@
@@ -20,16 +20,17 @@ index ca705ea..1ac4103 100644
    struct psa *psaptr =
        (struct psa *)0;
    // set _cvt to x10, the pointer to the CVT on z/OS
-@@ -305,21 +305,32 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
+@@ -305,21 +305,43 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
          return ZDNN_STATUS(ZDNN_UNAVAILABLE_FUNCTION,
                         "NNPA facility unavailable", NO_ARG);
    }
 +#elif defined(__clang__) && defined(__MVS__)
-+  // clang on z/OS: use STFLE to check NNPA, use .long encoding like Linux.
-+  // invoke_nnpa() is the per-operation hot path, and STFLE is a serializing
-+  // instruction, so cache the answer. z/OS cannot change the facility list
-+  // under a running program, which is why the XL C path above reads the static
-+  // system copy rather than re-issuing STFLE.
++  // clang on z/OS: detect NNPA with STFLE, then issue the instruction directly.
++  //
++  // invoke_nnpa() is the per-operation hot path and STFLE is serializing, so
++  // cache the answer. z/OS cannot change the facility list under a running
++  // program, which is why the XL C path above reads the static system copy
++  // rather than re-issuing STFLE.
 +  static int nnpa_installed = -1;
 +  if (nnpa_installed < 0) {
 +    nnpa_installed = zdnn_is_nnpa_installed() ? 1 : 0;
@@ -48,24 +49,34 @@ index ca705ea..1ac4103 100644
 -    : [r0] "+d" (r0), [cc] "+d" (cc)          // ASM outputs
 -    : "d" (r1)                           // ASM inputs
 -    : "memory", "cc");                   // ASM clobbers
+-    rtn.r0 = r0;
 +    register uint64_t r1 __asm__("%r1") = (uint64_t)(uintptr_t)parm_block;
-+    __asm volatile(
-+         "         DC X'B93B0000'             \n"
-+         "         JO *-4                     \n"
-+         "         IPM   %[cc]               \n"
-+         "         SRL   %[cc],28            \n"
-+         : [cc] "+d" (cc), "+d" (r0)
-+         : "d" (r1)
-+         : "memory", "cc");
-     rtn.r0 = r0;
--
++
++    // Two different assemblers see this file: Open XL (ibm-clang64) hands
++    // inline asm to HLASM, while the Open Enterprise SDK clang uses the LLVM
++    // integrated assembler. They share no syntax for raw constants or local
++    // labels -- HLASM rejects ".long"/"jo 1b", LLVM rejects "DC X'..'"/"JO *-4"
++    // -- so use only plain mnemonics here and keep the CC=3 retry in C. NNPA
++    // reports partial completion as CC=3 and resumes from the updated R0, which
++    // is why r0 is an in-out operand.
++    do {
++      __asm__ __volatile__(
++          " nnpa\n"
++          " ipm  %[cc]\n"
++          " srl  %[cc],28\n"
++          : [cc] "=d" (cc), "+d" (r0)
++          : "d" (r1)
++          : "memory", "cc");
++    } while (cc == 3);
+ 
++    rtn.r0 = r0;
 +  } else {
 +    return ZDNN_STATUS(ZDNN_UNAVAILABLE_FUNCTION, "NNPA facility unavailable", NO_ARG);
 +  }
  #endif   // defined(__MVS__)
    // clang-format on
  
-@@ -353,7 +364,7 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
+@@ -353,7 +375,7 @@ zdnn_status invoke_nnpa(uint8_t function_code, char *parm_block,
  /// possible on NNPA_QAF.
  ///
  zdnn_status invoke_nnpa_query(nnpa_qaf_parameter_block *qpb) {
