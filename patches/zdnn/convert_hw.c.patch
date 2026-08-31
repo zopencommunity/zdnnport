@@ -1,5 +1,5 @@
 diff --git a/zdnn/convert_hw.c b/zdnn/convert_hw.c
-index d9ff305..1a5cf71 100644
+index d9ff305..b1e7ac0 100644
 --- a/zdnn/convert_hw.c
 +++ b/zdnn/convert_hw.c
 @@ -37,6 +37,10 @@ vec_char8 selection_vector = {0,  1,  4,  5,  8,  9,  12, 13,
@@ -30,21 +30,22 @@ index d9ff305..1a5cf71 100644
    /*
         Invoke the VCRNF
                    "*     VCRNF VReg0,VRegL,VRegR,mask2,0        \n\t"
-@@ -84,6 +89,13 @@ static vec_int16 inline aiu_vec_round_from_fp32_inline(vec_float32 a,
+@@ -84,6 +89,14 @@ static vec_int16 inline aiu_vec_round_from_fp32_inline(vec_float32 a,
                   :  /* "%v0", "%v1", "%v2"   Clobbered */
    );
  // clang-format on
 +#elif defined(__clang__)
 +  __asm volatile("         VL    1,%[in_vector_left]         \n"
 +                 "         VL    2,%[in_vector_right]        \n"
-+                 "         VCRNF 0,1,2,2,0                   \n"
++                 "         VCRNF 0,1,2,0,2                   \n"
 +                 "         VST   0,%[out_vector]             \n"
 +                 : [out_vector] "=m"(out)
-+                 : [in_vector_left] "m"(a), [in_vector_right] "m"(b));
++                 : [in_vector_left] "m"(a), [in_vector_right] "m"(b)
++                 : "v0", "v1", "v2");
  #else
    // clang-format off
    __asm volatile(".insn vrr,0xe60000000075,%[out],%[in_hi],%[in_lo],0,2,0"
-@@ -115,7 +127,7 @@ vec_int16 aiu_vec_round_from_fp32(vec_float32 a, vec_float32 b) {
+@@ -115,7 +128,7 @@ vec_int16 aiu_vec_round_from_fp32(vec_float32 a, vec_float32 b) {
  static vec_int16 inline aiu_vec_convert_from_fp16_inline(vec_int16 a) {
    vec_int16 out;
  
@@ -53,20 +54,21 @@ index d9ff305..1a5cf71 100644
    /*
        Invoke the VCNF
                   "*     VCNF VReg0,VReg1,,mask1,0        \n\t"
-@@ -136,6 +148,12 @@ static vec_int16 inline aiu_vec_convert_from_fp16_inline(vec_int16 a) {
+@@ -136,6 +149,13 @@ static vec_int16 inline aiu_vec_convert_from_fp16_inline(vec_int16 a) {
                   :  /* "%v0", "%v1"   Clobbered */
                  // clang-format on
    );
 +#elif defined(__clang__)
 +  __asm volatile("         VL    1,%[in_vector]              \n"
-+                 "         VCNF  0,1,1,0                     \n"
++                 "         VCNF  0,1,0,1                     \n"
 +                 "         VST   0,%[out_vector]             \n"
 +                 : [out_vector] "=m"(out)
-+                 : [in_vector] "m"(a));
++                 : [in_vector] "m"(a)
++                 : "v0", "v1");
  #else
    // clang-format off
      __asm volatile(".insn vrr,0xe60000000055,%[out],%[in_vec],0,0,1,0"
-@@ -170,7 +188,7 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
+@@ -170,7 +190,7 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
    vec_float32 work_float_1;
    vec_float32 work_float_2;
  
@@ -75,25 +77,26 @@ index d9ff305..1a5cf71 100644
    /*
     *  Invoke the VCLFNx
     *  "*     VCLFN(H/L) VReg0,VReg2,mask0,mask2      \n\t"
-@@ -194,6 +212,17 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
+@@ -194,6 +214,18 @@ static void inline aiu_vec_lengthen_to_fp32_inline(vec_int16 a,
    // clang-format on
    *out1 = work_float_1;
    *out2 = work_float_2;
 +#elif defined(__clang__)
 +  __asm volatile("         VL     2,%[in_vector]             \n"
-+                 "         VCLFNH 0,2,0,2                    \n"
-+                 "         VCLFNL 1,2,0,2                    \n"
++                 "         VCLFNH 0,2,2,0                    \n"
++                 "         VCLFNL 1,2,2,0                    \n"
 +                 "         VST    0,%[out_vector_left]       \n"
 +                 "         VST    1,%[out_vector_right]      \n"
 +                 : [out_vector_left] "=m"(work_float_1),
 +                   [out_vector_right] "=m"(work_float_2)
-+                 : [in_vector] "m"(a));
++                 : [in_vector] "m"(a)
++                 : "v0", "v1", "v2");
 +  *out1 = work_float_1;
 +  *out2 = work_float_2;
  #else
    // clang-format off
    __asm volatile(".insn vrr,0xe60000000056,%[out1],%[in_vec],0,2,0,0    \n\t"
-@@ -230,7 +259,7 @@ void aiu_vec_lengthen_to_fp32(vec_int16 a, vec_float32 *out1,
+@@ -230,7 +262,7 @@ void aiu_vec_lengthen_to_fp32(vec_int16 a, vec_float32 *out1,
  static vec_int16 inline aiu_vec_convert_to_fp16_inline(vec_int16 a) {
    vec_int16 work_short_1;
  
@@ -102,20 +105,21 @@ index d9ff305..1a5cf71 100644
    /*
     *  Invoke the VCFN
     *  "*     VCFN VReg0,VReg2,mask0,mask1      \n\t"
-@@ -249,6 +278,12 @@ static vec_int16 inline aiu_vec_convert_to_fp16_inline(vec_int16 a) {
+@@ -249,6 +281,13 @@ static vec_int16 inline aiu_vec_convert_to_fp16_inline(vec_int16 a) {
                   :  /* "%v0", "%v2"   Clobbered */
      );
    // clang-format on
 +#elif defined(__clang__)
 +  __asm volatile("         VL    2,%[in_vector]              \n"
-+                 "         VCFN  0,2,0,1                     \n"
++                 "         VCFN  0,2,1,0                     \n"
 +                 "         VST   0,%[out_vector]             \n"
 +                 : [out_vector] "=m"(work_short_1)
-+                 : [in_vector] "m"(a));
++                 : [in_vector] "m"(a)
++                 : "v0", "v2");
  #else
    // clang-format off
    __asm volatile(".insn vrr,0xe6000000005D,%[out_vec],%[in_vec],0,1,0,0  \n\t"
-@@ -665,7 +700,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
+@@ -665,7 +704,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
      if (curnbr_fields_to_convert > 4) /* if more than 4, partially
                                        load right vector from data */
        in_vector_right =
@@ -124,7 +128,7 @@ index d9ff305..1a5cf71 100644
                                      (curnbr_fields_to_convert - 4) * 4 - 1); /*
                                         Partial load right vector with proper
                                         number of FP32 elements */
-@@ -674,7 +709,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
+@@ -674,7 +713,7 @@ uint64_t fp32_to_dlf16(float *input_data, uint16_t *output_data,
    } else { /* Else there are less than 4 values, so partially
                  load the left, and clear the right */
      in_vector_left = (vec_float32)vec_load_len(
