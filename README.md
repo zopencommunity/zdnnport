@@ -56,6 +56,45 @@ Build dependencies: ```make```, ```autoconf```, ```automake```, ```coreutils```
 
 Build flags required: ```-fzvector``` ```-mzvector``` ```-march=z16``` ```-D_POSIX_C_SOURCE=200809L```
 
+# Verifying on NNPA hardware
+
+The upstream test suite under `tests/` (66 drivers, including `testDriver_convert.c`
+and `testDriver_nnpa_parm_block.c`) exercises the NNPA paths and is the best check
+on this port. It is **not** wired into `ZOPEN_CHECK` because the CI builders have no
+z16/z17, and every hardware test would fail there. Run it by hand on an NNPA machine:
+
+```bash
+gmake all -C zdnn && gmake all -C tests
+```
+
+A fast smoke test that catches the whole class of bugs this port has hit -- a
+DLFLOAT16 round trip. It must come back exact; if every value returns 0.0, the
+conversion path is broken:
+
+```c
+zdnn_tensor_desc pre, tfm; zdnn_ztensor zt;
+zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &pre, 4, 8);
+zdnn_generate_transformed_desc(&pre, &tfm);
+zdnn_init_ztensor_with_malloc(&pre, &tfm, &zt);
+float in[32], out[32];
+for (int i = 0; i < 32; i++) in[i] = i * 1.5f;
+zdnn_transform_ztensor(&zt, in);       /* stickify   */
+zdnn_transform_origtensor(&zt, out);   /* unstickify */
+/* out[] must equal in[]; all-zero output means the NNPA path is not working */
+```
+
+Three defects found this way, each of which returned ZDNN_OK while silently
+producing nothing:
+
+- enum width mismatch between libzdnn and its consumer (`zdnn_tensor_desc` leads
+  with three enums, so `dim1` landed at offset 16 vs 24)
+- NNPA parameter blocks compiled unpacked under clang
+- transposed mask operands on VCRNF / VCNF / VCLFNH / VCLFNL / VCFN
+
+All three are invisible to a build that only checks exit codes, which is why the
+round trip above is worth running after any change to `convert_hw.c`,
+`zdnn_private.h` or the build flags.
+
 # Documentation
 [Upstream zDNN documentation](https://github.com/ibm/zdnn) 
 
