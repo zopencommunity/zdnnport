@@ -1,5 +1,5 @@
 diff --git a/zdnn/zdnn_private.h b/zdnn/zdnn_private.h
-index aad7eb0..9258728 100644
+index aad7eb0..9f3dd66 100644
 --- a/zdnn/zdnn_private.h
 +++ b/zdnn/zdnn_private.h
 @@ -18,16 +18,27 @@
@@ -34,6 +34,830 @@ index aad7eb0..9258728 100644
  #endif
  
  #include "../config.h"
+@@ -218,7 +229,7 @@ typedef union nnpa_return {
+  * parameter blocks
+  */
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct nnpa_tensor_descriptor {
+@@ -231,28 +242,28 @@ typedef
+   uint32_t dim1_index_size;
+   uint64_t *tensor_data_addr;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ nnpa_tensor_descriptor;
+ 
+ // BIG ENDIAN 128-bits bits-field, most significant bit is bit 0
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct bit128_t {
+   uint64_t bits_0to63;
+   uint64_t bits_64to127;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ bit128_t;
+ 
+ // BIG ENDIAN 256-bits bits-field, most significant bit is bit 0
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct bit256_t {
+@@ -261,13 +272,13 @@ typedef
+   uint64_t bits_128to191;
+   uint64_t bits_192to255;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ bit256_t;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct function_specific_parameters {
+@@ -288,7 +299,7 @@ typedef
+   uint32_t function_specific_parm15;
+   uint32_t function_specific_parm16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ function_specific_parameters;
+@@ -304,7 +315,7 @@ function_specific_parameters;
+ #define QAF_PARMBLOCK_SIZE 256
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct nnpa_parameter_block {
+@@ -344,7 +355,7 @@ nnpa_parameter_block
+     ;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct nnpa_qaf_parameter_block {
+@@ -621,7 +632,7 @@ vec_int16 aiu_vec_convert_to_fp16(vec_int16 a);
+ // NNPA-MATMUL-OP function-specific-parameters and their bitfields
+ // -----------------------------------------------------------------------------
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -630,13 +641,13 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t operation : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-29: reserved
+@@ -647,13 +658,13 @@ typedef
+   bool transpose_b : 1;
+   bool transpose_a : 1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -662,13 +673,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t rec_scale : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm3_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -677,13 +688,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t offset : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm4_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -692,26 +703,26 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t rec_scale : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm5_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: reserved
+     struct func_sp_parm6_matmul {
+   uint32_t reserved1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm6_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -720,26 +731,26 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t rec_scale : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm7_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: reserved
+     struct func_sp_parm8_matmul {
+   uint32_t reserved1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm8_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -748,13 +759,13 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t clip_min : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm9_matmul;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -763,7 +774,7 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t clip_max : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm10_matmul;
+@@ -772,7 +783,7 @@ func_sp_parm10_matmul;
+ // NNPA-MATMUL-OP-BCAST23 function-specific-parameter-1 bitfields
+ // -----------------------------------------------------------------------------
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -781,25 +792,25 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t operation : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_matmul_bcast;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_matmul_bcast {
+   func_sp_parm1_matmul_bcast parm1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_matmul_bcast;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_matmul {
+@@ -814,7 +825,7 @@ typedef
+   func_sp_parm9_matmul parm9;
+   func_sp_parm10_matmul parm10;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_matmul;
+@@ -824,7 +835,7 @@ func_sp_parms_matmul;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-28: reserved
+@@ -833,33 +844,33 @@ typedef
+   uint32_t reserved1 : 28;
+   uint32_t act : 4;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_softmax;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: mask
+     struct func_sp_parm2_softmax {
+   uint32_t mask;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_softmax;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_softmax {
+   func_sp_parm1_softmax parm1;
+   func_sp_parm2_softmax parm2;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_softmax;
+@@ -869,7 +880,7 @@ func_sp_parms_softmax;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -878,13 +889,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t clipping_value : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_relu;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -893,20 +904,20 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t adjustment_factor : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_relu;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_relu {
+   func_sp_parm1_relu parm1;
+   func_sp_parm2_relu parm2;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_relu;
+@@ -916,7 +927,7 @@ func_sp_parms_relu;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -929,39 +940,39 @@ typedef
+   uint32_t reserved2 : 1;
+   uint32_t pad : 3;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_conv2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: stride_width
+     struct func_sp_parm2_conv2d {
+   uint32_t stride_width;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_conv2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: stride_height
+     struct func_sp_parm3_conv2d {
+   uint32_t stride_height;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm3_conv2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -970,13 +981,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t clipping_value : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm4_conv2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_conv2d {
+@@ -985,7 +996,7 @@ typedef
+   func_sp_parm3_conv2d parm3;
+   func_sp_parm4_conv2d parm4;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_conv2d;
+@@ -994,7 +1005,7 @@ func_sp_parms_conv2d;
+ // NNPA-TRANSFORM function-specific-parameters and their bitfields
+ // -----------------------------------------------------------------------------
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0: saturation control
+@@ -1005,7 +1016,7 @@ typedef
+   uint32_t reserved1 : 23;
+   uint32_t toc : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_transform;
+@@ -1017,7 +1028,7 @@ typedef enum nnpa_transform_operation_code {
+ } nnpa_transform_operation_code;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -1026,13 +1037,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t rec_scale : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_transform;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-15: reserved
+@@ -1041,13 +1052,13 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t offset : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm3_transform;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -1056,13 +1067,13 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t clip_min : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm4_transform;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-23: reserved
+@@ -1071,13 +1082,13 @@ typedef
+   uint32_t reserved1 : 24;
+   uint32_t clip_max : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm5_transform;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_transform {
+@@ -1087,7 +1098,7 @@ typedef
+   func_sp_parm4_transform parm4;
+   func_sp_parm5_transform parm5;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_transform;
+@@ -1097,7 +1108,7 @@ func_sp_parms_transform;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm1_invsqrt {
+@@ -1106,19 +1117,19 @@ typedef
+   uint32_t reserved1 : 16;
+   uint32_t epsilon : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_invsqrt;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_invsqrt {
+   func_sp_parm1_invsqrt parm1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_invsqrt;
+@@ -1128,25 +1139,25 @@ func_sp_parms_invsqrt;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm1_moments {
+   uint32_t bessel_correction;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_moments;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_moments {
+   func_sp_parm1_moments parm1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_moments;
+@@ -1158,14 +1169,14 @@ func_sp_parms_moments;
+ //  bits 0-15: reserved
+ //  bits 16-31: beta
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm1_layernorm {
+   uint32_t reserved1 : 16;
+   uint32_t beta : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_layernorm;
+@@ -1177,14 +1188,14 @@ func_sp_parm1_layernorm;
+ //  bits 0-15: reserved
+ //  bits 16-31: gamma
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm2_layernorm {
+   uint32_t reserved1 : 16;
+   uint32_t gamma : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_layernorm;
+@@ -1196,20 +1207,20 @@ func_sp_parm2_layernorm;
+ //  bits 0-15: reserved
+ //  bits 16-31: epsilon value
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm3_layernorm {
+   uint32_t reserved1 : 16;
+   uint32_t epsilon : 16;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm3_layernorm;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_layernorm {
+@@ -1217,7 +1228,7 @@ typedef
+   func_sp_parm2_layernorm parm2;
+   func_sp_parm3_layernorm parm3;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_layernorm;
+@@ -1229,26 +1240,26 @@ func_sp_parms_layernorm;
+ //  bits 0-23: reserved
+ //  bits 24-31: operation
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parm1_reduce {
+   uint32_t reserved1 : 24;
+   uint32_t operation : 8;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_reduce;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_reduce {
+   func_sp_parm1_reduce parm1;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_reduce;
+@@ -1259,7 +1270,7 @@ func_sp_parms_reduce;
+ // -----------------------------------------------------------------------------
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-28: reserved
+@@ -1268,65 +1279,65 @@ typedef
+   uint32_t reserved1 : 29;
+   uint32_t pad : 3;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm1_pool2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: stride_width aka dim2_stride
+     struct func_sp_parm2_pool2d {
+   uint32_t stride_width;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm2_pool2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: stride_height aka dim3_stride
+     struct func_sp_parm3_pool2d {
+   uint32_t stride_height;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm3_pool2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: kernel_width aka dim2_window
+     struct func_sp_parm4_pool2d {
+   uint32_t kernel_width;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm4_pool2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     //  bits 0-31: kernel_height aka dim3_window
+     struct func_sp_parm5_pool2d {
+   uint32_t kernel_height;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parm5_pool2d;
+ 
+ typedef
+-#ifdef __MVS__
++#if defined(__MVS__) && !defined(__clang__)
+     _Packed
+ #endif
+     struct func_sp_parms_pool2d {
+@@ -1336,7 +1347,7 @@ typedef
+   func_sp_parm4_pool2d parm4;
+   func_sp_parm5_pool2d parm5;
+ }
+-#ifndef __MVS__
++#if !defined(__MVS__) || defined(__clang__)
+ __attribute__((packed))
+ #endif
+ func_sp_parms_pool2d;
 @@ -1547,7 +1558,7 @@ void dumpdata_ztensor(const zdnn_ztensor *ztensor, dump_mode mode,
  #define PADDED(x)                                                              \
    ((uint32_t)CEIL(x, AIU_2BYTE_CELLS_PER_STICK) * AIU_2BYTE_CELLS_PER_STICK)
